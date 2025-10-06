@@ -97,7 +97,7 @@ async function run() {
                 res.status(500).send({ success: false, message: "Internal Server Error" });
             }
         });
-        //   end ------------------------------------------
+        // afghan  end ------------------------------------------
 
         // post api for persian 
         app.post('/persian', async (req, res) => {
@@ -106,7 +106,7 @@ async function run() {
             res.send(result)
         })
 
-        // end-----------------------
+        //persian  end-----------------------
 
 
 
@@ -128,6 +128,41 @@ async function run() {
             const result = await indianCollection.insertOne(newOrder);
             res.send(result);
         });
+
+
+        // get indian data
+        app.get('/indian', async (req, res) => {
+            const result = await indianCollection.find().toArray();
+            res.send(result);
+        });
+
+        // put request for indian menu 
+         app.put("/indian/:id", async (req, res) => {
+            try {
+                const id = req.params.id;
+                const updateData = req.body;
+                const result = await indianCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    { $set: updateData }
+                );
+
+                if (result.modifiedCount > 0) {
+                    res.send({ success: true, message: "Order updated successfully" });
+                } else {
+                    res.status(404).send({ success: false, message: "Order not found" });
+                }
+            } catch (error) {
+                console.error("Error updating order:", error);
+                res.status(500).send({ success: false, message: "Internal Server Error" });
+            }
+        });
+
+
+
+
+
+
+        ///indian end ---------------------------
 
         //post api for lamb
         app.post('/lamb', async (req, res) => {
@@ -161,11 +196,7 @@ async function run() {
             res.send(result);
         });
 
-        // get indian data
-        app.get('/indian', async (req, res) => {
-            const result = await indianCollection.find().toArray();
-            res.send(result);
-        });
+        
 
         // get lamb data
         app.get('/lamb', async (req, res) => {
