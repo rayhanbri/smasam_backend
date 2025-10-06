@@ -157,20 +157,28 @@ async function run() {
             }
         });
 
-
-
-
-
-
         ///indian end ---------------------------
 
         //post api for lamb
-        app.post('/lamb', async (req, res) => {
+        app.post("/lamb", async (req, res) => {
             const data = req.body;
-            const result = await lambCollection.insertOne(data);
-            res.send(result)
-        })
+            console.log(data)
+            // count total orders to generate unique order number
+            const count = await lambCollection.countDocuments();
+            // add extra fields before inserting
+            const newOrder = {
+                ...data,
+                orderNumber: `smasam/lamb-${(count + 1).toString().padStart(3, "0")}`,
+                orderStatus: "Pending",
+                lastUpdate: "Not Delivered",
+                createdAt: new Date(),
+            };
+            const result = await lambCollection.insertOne(newOrder);
+            res.send(result);
+        });
 
+
+        // lamb end ---------------------------
         //post api for takeAway
         app.post('/takeAway', async (req, res) => {
             const data = req.body;
