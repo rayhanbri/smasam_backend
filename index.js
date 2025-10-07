@@ -258,12 +258,31 @@ async function run() {
         // takeaway end ---------------------------
 
 
+        // lunch start 
+
         //post api for lunch
-        app.post('/lunch', async (req, res) => {
+          app.post("/lunch", async (req, res) => {
             const data = req.body;
-            const result = await lunchCollection.insertOne(data);
-            res.send(result)
-        })
+            console.log(data)
+            // count total orders to generate unique order number
+            const count = await lunchCollection.countDocuments();
+            // add extra fields before inserting
+            const newOrder = {
+                ...data,
+                orderNumber: `smasam/lunch-${(count + 1).toString().padStart(3, "0")}`,
+                orderStatus: "Pending",
+                lastUpdate: "Not Delivered",
+            };
+            const result = await lunchCollection.insertOne(newOrder);
+            res.send(result);
+        });
+
+
+         // get lunch data
+        app.get('/lunch', async (req, res) => {
+            const result = await lunchCollection.find().toArray();
+            res.send(result);
+        });
 
 
         //get data  endpoit 
@@ -281,21 +300,12 @@ async function run() {
 
 
 
-        // get lunch data
-        app.get('/lunch', async (req, res) => {
-            const result = await lunchCollection.find().toArray();
-            res.send(result);
-        });
+       
 
 
 
 
 
-        app.get('/users', async (req, res) => {
-            const result = await usersCollection.find().limit(6).toArray()
-            console.log(result)
-            res.send(result)
-        })
 
 
         //testing
