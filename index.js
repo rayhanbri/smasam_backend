@@ -32,7 +32,7 @@ async function run() {
         // await client.connect();
         const usersCollection = client.db('smasam_backend').collection('users')
         const afghanCollection = client.db('smasam_backend').collection('afghan')
-        const persianCollection = client.db('smasam_backend').collection('persian')
+        const persianCollection = client.db('smasam_backend').collection('persiann')
         const indianCollection = client.db('smasam_backend').collection('indian')
         const lambCollection = client.db('smasam_backend').collection('lamb')
         const takeAwayCollection = client.db('smasam_backend').collection('takeAway')
@@ -100,11 +100,55 @@ async function run() {
         // afghan  end ------------------------------------------
 
         // post api for persian 
-        app.post('/persian', async (req, res) => {
+       app.post("/persian", async (req, res) => {
             const data = req.body;
-            const result = await persianCollection.insertOne(data)
-            res.send(result)
-        })
+            console.log(data)
+            // count total orders to generate unique order number
+            const count = await persianCollection.countDocuments();
+            // add extra fields before inserting
+            const newOrder = {
+                ...data,
+                orderNumber: `smasam/persian-${(count + 1).toString().padStart(3, "0")}`,
+                orderStatus: "Pending",
+                lastUpdate: "Not Delivered",
+            };
+            const result = await persianCollection.insertOne(newOrder);
+            res.send(result);
+        });
+
+         // get persian data
+        app.get('/persian', async (req, res) => {
+            const result = await persianCollection.find().toArray();
+            res.send(result);
+        });
+
+
+
+          // put request for indian menu 
+        app.put("/persian/:id", async (req, res) => {
+            try {
+                const id = req.params.id;
+                const updateData = req.body;
+                const result = await persianCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    { $set: updateData }
+                );
+
+                if (result.modifiedCount > 0) {
+                    res.send({ success: true, message: "Order updated successfully" });
+                } else {
+                    res.status(404).send({ success: false, message: "Order not found" });
+                }
+            } catch (error) {
+                console.error("Error updating order:", error);
+                res.status(500).send({ success: false, message: "Internal Server Error" });
+            }
+        });
+
+
+
+
+
 
         //persian  end-----------------------
 
@@ -203,9 +247,6 @@ async function run() {
                 res.status(500).send({ success: false, message: "Internal Server Error" });
             }
         });
-
-
-
         // lamb end ---------------------------
 
         // takeaway start ----------------------------------
@@ -284,16 +325,33 @@ async function run() {
             res.send(result);
         });
 
+          app.put("/lunch/:id", async (req, res) => {
+            try {
+                const id = req.params.id;
+                const updateData = req.body;
+                const result = await lunchCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    { $set: updateData }
+                );
+
+                if (result.modifiedCount > 0) {
+                    res.send({ success: true, message: "Order updated successfully" });
+                } else {
+                    res.status(404).send({ success: false, message: "Order not found" });
+                }
+            } catch (error) {
+                console.error("Error updating order:", error);
+                res.status(500).send({ success: false, message: "Internal Server Error" });
+            }
+        });
+
+
 
         //get data  endpoit 
 
 
 
-        // get persian data
-        app.get('/persian', async (req, res) => {
-            const result = await persianCollection.find().toArray();
-            res.send(result);
-        });
+       
 
 
 
