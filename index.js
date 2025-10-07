@@ -137,7 +137,7 @@ async function run() {
         });
 
         // put request for indian menu 
-         app.put("/indian/:id", async (req, res) => {
+        app.put("/indian/:id", async (req, res) => {
             try {
                 const id = req.params.id;
                 const updateData = req.body;
@@ -177,7 +177,7 @@ async function run() {
             res.send(result);
         });
 
-         // get lamb data
+        // get lamb data
         app.get('/lamb', async (req, res) => {
             const result = await lambCollection.find().toArray();
             res.send(result);
@@ -210,7 +210,7 @@ async function run() {
 
         // takeaway start ----------------------------------
         //post api for takeAway
-       app.post("/takeAway", async (req, res) => {
+        app.post("/takeAway", async (req, res) => {
             const data = req.body;
             console.log(data)
             // count total orders to generate unique order number
@@ -231,6 +231,27 @@ async function run() {
         app.get('/takeAway', async (req, res) => {
             const result = await takeAwayCollection.find().toArray();
             res.send(result);
+        });
+
+
+        app.put("/takeaway/:id", async (req, res) => {
+            try {
+                const id = req.params.id;
+                const updateData = req.body;
+                const result = await takeAwayCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    { $set: updateData }
+                );
+
+                if (result.modifiedCount > 0) {
+                    res.send({ success: true, message: "Order updated successfully" });
+                } else {
+                    res.status(404).send({ success: false, message: "Order not found" });
+                }
+            } catch (error) {
+                console.error("Error updating order:", error);
+                res.status(500).send({ success: false, message: "Internal Server Error" });
+            }
         });
 
 
@@ -255,10 +276,10 @@ async function run() {
             res.send(result);
         });
 
-        
 
-       
-        
+
+
+
 
         // get lunch data
         app.get('/lunch', async (req, res) => {
