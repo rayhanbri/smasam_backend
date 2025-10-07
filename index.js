@@ -177,14 +177,65 @@ async function run() {
             res.send(result);
         });
 
+         // get lamb data
+        app.get('/lamb', async (req, res) => {
+            const result = await lambCollection.find().toArray();
+            res.send(result);
+        });
+
+
+        app.put("/lamb/:id", async (req, res) => {
+            try {
+                const id = req.params.id;
+                const updateData = req.body;
+                const result = await lambCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    { $set: updateData }
+                );
+
+                if (result.modifiedCount > 0) {
+                    res.send({ success: true, message: "Order updated successfully" });
+                } else {
+                    res.status(404).send({ success: false, message: "Order not found" });
+                }
+            } catch (error) {
+                console.error("Error updating order:", error);
+                res.status(500).send({ success: false, message: "Internal Server Error" });
+            }
+        });
+
+
 
         // lamb end ---------------------------
+
+        // takeaway start ----------------------------------
         //post api for takeAway
-        app.post('/takeAway', async (req, res) => {
+       app.post("/takeAway", async (req, res) => {
             const data = req.body;
-            const result = await takeAwayCollection.insertOne(data);
-            res.send(result)
-        })
+            console.log(data)
+            // count total orders to generate unique order number
+            const count = await takeAwayCollection.countDocuments();
+            // add extra fields before inserting
+            const newOrder = {
+                ...data,
+                orderNumber: `smasam/take-${(count + 1).toString().padStart(3, "0")}`,
+                orderStatus: "Pending",
+                lastUpdate: "Not Delivered",
+            };
+            const result = await takeAwayCollection.insertOne(newOrder);
+            res.send(result);
+        });
+
+
+        // get takeaway data
+        app.get('/takeAway', async (req, res) => {
+            const result = await takeAwayCollection.find().toArray();
+            res.send(result);
+        });
+
+
+        // takeaway end ---------------------------
+
 
         //post api for lunch
         app.post('/lunch', async (req, res) => {
@@ -206,17 +257,8 @@ async function run() {
 
         
 
-        // get lamb data
-        app.get('/lamb', async (req, res) => {
-            const result = await lambCollection.find().toArray();
-            res.send(result);
-        });
-
-        // get takeaway data
-        app.get('/takeAway', async (req, res) => {
-            const result = await takeAwayCollection.find().toArray();
-            res.send(result);
-        });
+       
+        
 
         // get lunch data
         app.get('/lunch', async (req, res) => {
