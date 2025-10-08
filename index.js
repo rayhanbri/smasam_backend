@@ -65,6 +65,7 @@ async function run() {
                 orderNumber: `smasam/afghan-${(count + 1).toString().padStart(3, "0")}`,
                 orderStatus: "Pending",
                 lastUpdate: "Not Delivered",
+                isDelivered: false,
                 createdAt: new Date(),
             };
             const result = await afghanCollection.insertOne(newOrder);
