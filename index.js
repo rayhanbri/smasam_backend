@@ -65,7 +65,9 @@ async function run() {
                 orderNumber: `smasam/afghan-${(count + 1).toString().padStart(3, "0")}`,
                 orderStatus: "Pending",
                 lastUpdate: "Not Delivered",
-                isDelivered: false,
+                // sendin mail through n8n 
+                isDeliveredMsg: false,
+                isConfirmMsg:false,
                 createdAt: new Date(),
             };
             const result = await afghanCollection.insertOne(newOrder);
@@ -112,6 +114,8 @@ async function run() {
                 orderNumber: `smasam/persian-${(count + 1).toString().padStart(3, "0")}`,
                 orderStatus: "Pending",
                 lastUpdate: "Not Delivered",
+                 isDeliveredMsg: false,
+                isConfirmMsg:false,
             };
             const result = await persianCollection.insertOne(newOrder);
             res.send(result);
@@ -168,6 +172,8 @@ async function run() {
                 orderNumber: `smasam/indian-${(count + 1).toString().padStart(3, "0")}`,
                 orderStatus: "Pending",
                 lastUpdate: "Not Delivered",
+                 isDeliveredMsg: false,
+                isConfirmMsg:false,
                 createdAt: new Date(),
             };
             const result = await indianCollection.insertOne(newOrder);
@@ -217,6 +223,8 @@ async function run() {
                 orderStatus: "Pending",
                 lastUpdate: "Not Delivered",
                 createdAt: new Date(),
+                 isDeliveredMsg: false,
+                isConfirmMsg:false,
             };
             const result = await lambCollection.insertOne(newOrder);
             res.send(result);
@@ -263,6 +271,8 @@ async function run() {
                 orderNumber: `smasam/take-${(count + 1).toString().padStart(3, "0")}`,
                 orderStatus: "Pending",
                 lastUpdate: "Not Delivered",
+                 isDeliveredMsg: false,
+                isConfirmMsg:false,
             };
             const result = await takeAwayCollection.insertOne(newOrder);
             res.send(result);
@@ -314,6 +324,8 @@ async function run() {
                 orderNumber: `smasam/lunch-${(count + 1).toString().padStart(3, "0")}`,
                 orderStatus: "Pending",
                 lastUpdate: "Not Delivered",
+                 isDeliveredMsg: false,
+                isConfirmMsg:false,
             };
             const result = await lunchCollection.insertOne(newOrder);
             res.send(result);
