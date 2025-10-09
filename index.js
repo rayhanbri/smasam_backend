@@ -41,9 +41,18 @@ const sendConfirmationEmail = async (orderData) => {
         console.log('📧 Email field (email):', orderData.email);
         console.log('📧 Email field (email_1):', orderData.email_1);
         console.log('💳 Payment method (Betalingsmetode):', orderData.Betalingsmetode);
+        console.log('💳 Payment method (radio_3):', orderData.radio_3);
+        console.log('🔍 All payment-related fields:');
+        Object.keys(orderData).forEach(key => {
+            if (key.toLowerCase().includes('betaling') || key.toLowerCase().includes('payment') || key.includes('radio_3')) {
+                console.log(`   - ${key}: ${orderData[key]}`);
+            }
+        });
         console.log('🆔 Order number:', orderData.orderNumber);
+        console.log('👤 Person field (number_1):', orderData.number_1);
         console.log('💰 Total price:', orderData.totalPrice);
         console.log('🧮 Calculation 1:', orderData.calculation_1);
+        console.log('🧮 Calculation 2:', orderData.calculation_2);
         console.log('🧮 Calculation 3:', orderData.calculation_3);
 
         // Log ALL fields that contain 'calculation'
@@ -55,7 +64,10 @@ const sendConfirmationEmail = async (orderData) => {
         });
 
         // Check payment method to determine email template
-        const isMobilePay = orderData.Betalingsmetode === "Mobilbetaling";
+        const paymentMethod = orderData.Betalingsmetode || orderData.radio_3 || '';
+        const isMobilePay = paymentMethod.toLowerCase().includes('mobilbetaling') ||
+            paymentMethod.toLowerCase().includes('mobilepay') ||
+            paymentMethod === "Mobilbetaling";
 
         // Check if this is a takeaway order (for items display)
         const isTakeawayOrder = orderData.orderNumber && orderData.orderNumber.includes('/take-');
@@ -67,22 +79,40 @@ const sendConfirmationEmail = async (orderData) => {
         );
 
         // Always show calculation fields if they exist, regardless of order type
-        const showCalculations = orderData.calculation_1 || orderData.calculation_3;
+        const showCalculations = orderData.calculation_1 || orderData.calculation_2 || orderData.calculation_3;
+
+        // Special pricing logic for takeaway orders
+        let takeawayTotal = 0;
+        if (isTakeawayOrder) {
+            if (orderData.radio_5 === "Afhentning") {
+                takeawayTotal = orderData.calculation_2 || 0;
+            } else if (orderData.radio_5 === "Levering") {
+                takeawayTotal = orderData.calculation_1 || 0;
+            }
+        }
 
         console.log('🔍 Template logic:');
+        console.log('   - paymentMethod:', paymentMethod);
         console.log('   - isMobilePay:', isMobilePay);
+        console.log('   - Will use MobilePay template:', isMobilePay);
         console.log('   - isTakeawayOrder:', isTakeawayOrder);
         console.log('   - showPrice:', showPrice);
         console.log('   - showCalculations:', showCalculations);
+        console.log('   - takeawayTotal:', takeawayTotal);
+        console.log('   - radio_5 (service type):', orderData.radio_5);
 
         // Debug pricing section values before template creation
         console.log('💰 Pricing section debug:');
         console.log('   - showPrice && orderData.totalPrice:', showPrice && orderData.totalPrice);
         console.log('   - orderData.totalPrice:', orderData.totalPrice);
         console.log('   - orderData.calculation_1:', orderData.calculation_1);
+        console.log('   - orderData.calculation_2:', orderData.calculation_2);
         console.log('   - orderData.calculation_3:', orderData.calculation_3);
         console.log('   - Boolean check calculation_1:', !!orderData.calculation_1);
+        console.log('   - Boolean check calculation_2:', !!orderData.calculation_2);
         console.log('   - Boolean check calculation_3:', !!orderData.calculation_3);
+        console.log('   - takeawayTotal:', takeawayTotal);
+        console.log('   - isTakeawayOrder && takeawayTotal:', isTakeawayOrder && takeawayTotal);
 
         // Create different email content based on payment method
         let emailContent;
@@ -91,8 +121,8 @@ const sendConfirmationEmail = async (orderData) => {
             // MobilePay template
             emailContent = `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h2 style="color: #2c3e50; text-align: center;">SMASAM Restaurant</h2>
-                    
+                    <h2 style="color: #2c3e50; text-align: center;">SMASAM Catering</h2>
+
                     <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
                         <p style="font-size: 16px; margin-bottom: 15px;">
                             Your order is confirmed ✅
@@ -103,6 +133,7 @@ const sendConfirmationEmail = async (orderData) => {
                             <p style="margin: 5px 0;"><strong>Name:</strong> ${orderData.name_2 || orderData.name || 'N/A'}</p>
                             <p style="margin: 5px 0;"><strong>Phone:</strong> ${orderData.phone_1 || orderData.phone || 'N/A'}</p>
                             <p style="margin: 5px 0;"><strong>Email:</strong> ${orderData.email_1 || orderData.email || 'N/A'}</p>
+                            ${orderData.number_1 ? `<p style="margin: 5px 0;"><strong>Number of Persons:</strong> ${orderData.number_1}</p>` : ''}
                             <p style="margin: 5px 0;"><strong>Payment Method:</strong> ${orderData.radio_3 || orderData.Betalingsmetode || 'N/A'}</p>
                         </div>
                         
@@ -118,30 +149,9 @@ const sendConfirmationEmail = async (orderData) => {
                             <div style="margin: 20px 0; padding: 15px; background-color: #d1ecf1; border-radius: 5px;">
                                 <h3 style="margin-top: 0; color: #0c5460;">Pricing:</h3>
                                 <p style="margin: 5px 0;"><strong>Total Amount:</strong> ${orderData.totalPrice} DKK</p>
+                                ${isTakeawayOrder && takeawayTotal ? `<p style="margin: 5px 0;"><strong>Service Total:</strong> ${takeawayTotal} DKK</p>` : ''}
                             </div>
                         ` : ''}
-                        
-                        ${isTakeawayOrder ? (() => {
-                    // Show items only for takeaway orders (items with "Stykke" values, excluding "Vælg mellem mulighederne")
-                    let itemsHtml = '';
-                    Object.keys(orderData).forEach(key => {
-                        const value = orderData[key];
-                        // Check if VALUE contains "Stykke" AND exclude any selection placeholders
-                        if (value &&
-                            String(value).includes('Stykke') &&
-                            !String(value).toLowerCase().includes('vælg') &&
-                            !String(value).toLowerCase().includes('mellem') &&
-                            !String(value).toLowerCase().includes('mulighederne')) {
-                            itemsHtml += `<p style="font-size: 14px; margin: 5px 0;">• ${key}: ${value}</p>`;
-                        }
-                    });
-                    return itemsHtml ? `
-                                <div style="margin: 20px 0; padding: 15px; background-color: #fff3cd; border-radius: 5px;">
-                                    <h3 style="margin-top: 0; color: #856404;">Selected Items:</h3>
-                                    ${itemsHtml}
-                                </div>
-                            ` : '';
-                })() : ''}
                         
                         <div style="background-color: #e8f4fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
                             <p style="font-size: 16px; color: #2c3e50; margin: 0;">
@@ -149,16 +159,15 @@ const sendConfirmationEmail = async (orderData) => {
                             </p>
                         </div>
                         
-                        ${showCalculations ? `
+                        ${(orderData.calculation_2 || orderData.calculation_3) ? `
                             <div style="margin: 20px 0; padding: 15px; background-color: #f8d7da; border-radius: 5px;">
-                                <h3 style="margin-top: 0; color: #721c24;">Calculation Details:</h3>
-                                ${orderData.calculation_1 ? `<p style="margin: 5px 0;"><strong>Calculation 1:</strong> ${orderData.calculation_1}</p>` : ''}
-                                ${orderData.calculation_3 ? `<p style="margin: 5px 0;"><strong>Calculation 3:</strong> ${orderData.calculation_3}</p>` : ''}
+                                <h3 style="margin-top: 0; color: #721c24;">Price:</h3>
+                                ${orderData.calculation_2 ? `<p style="margin: 5px 0;"><strong>Total:</strong> ${orderData.calculation_2}</p>` : orderData.calculation_3 ? `<p style="margin: 5px 0;"><strong>Total:</strong> ${orderData.calculation_3}</p>` : ''}
                             </div>
                         ` : ''}
                         
                         <p style="font-size: 18px; text-align: center; color: #27ae60; margin-top: 20px;">
-                            💳 Thank you for your order from SMASAM!
+                            💳 Thank you for your order from SMASAM!<br>
                         </p>
                     </div>
                 </div>
@@ -167,7 +176,7 @@ const sendConfirmationEmail = async (orderData) => {
             // Cash on pickup template
             emailContent = `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h2 style="color: #2c3e50; text-align: center;">SMASAM Restaurant</h2>
+                    <h2 style="color: #2c3e50; text-align: center;">SMASAM Catering</h2>
                     
                     <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
                         <p style="font-size: 16px; margin-bottom: 15px;">
@@ -179,6 +188,7 @@ const sendConfirmationEmail = async (orderData) => {
                             <p style="margin: 5px 0;"><strong>Name:</strong> ${orderData.name_2 || orderData.name || 'N/A'}</p>
                             <p style="margin: 5px 0;"><strong>Phone:</strong> ${orderData.phone_1 || orderData.phone || 'N/A'}</p>
                             <p style="margin: 5px 0;"><strong>Email:</strong> ${orderData.email_1 || orderData.email || 'N/A'}</p>
+                            ${orderData.number_1 ? `<p style="margin: 5px 0;"><strong>Number of Persons:</strong> ${orderData.number_1}</p>` : ''}
                             <p style="margin: 5px 0;"><strong>Payment Method:</strong> ${orderData.radio_3 || orderData.Betalingsmetode || 'N/A'}</p>
                         </div>
                         
@@ -194,30 +204,9 @@ const sendConfirmationEmail = async (orderData) => {
                             <div style="margin: 20px 0; padding: 15px; background-color: #d1ecf1; border-radius: 5px;">
                                 <h3 style="margin-top: 0; color: #0c5460;">Pricing:</h3>
                                 <p style="margin: 5px 0;"><strong>Total Amount:</strong> ${orderData.totalPrice} DKK</p>
+                                ${isTakeawayOrder && takeawayTotal ? `<p style="margin: 5px 0;"><strong>Service Total:</strong> ${takeawayTotal} DKK</p>` : ''}
                             </div>
                         ` : ''}
-                        
-                        ${isTakeawayOrder ? (() => {
-                    // Show items only for takeaway orders (items with "Stykke" values, excluding "Vælg mellan mulighederne")
-                    let itemsHtml = '';
-                    Object.keys(orderData).forEach(key => {
-                        const value = orderData[key];
-                        // Check if VALUE contains "Stykke" AND exclude any selection placeholders
-                        if (value &&
-                            String(value).includes('Stykke') &&
-                            !String(value).toLowerCase().includes('vælg') &&
-                            !String(value).toLowerCase().includes('mellem') &&
-                            !String(value).toLowerCase().includes('mulighederne')) {
-                            itemsHtml += `<p style="font-size: 14px; margin: 5px 0;">• ${key}: ${value}</p>`;
-                        }
-                    });
-                    return itemsHtml ? `
-                                <div style="margin: 20px 0; padding: 15px; background-color: #fff3cd; border-radius: 5px;">
-                                    <h3 style="margin-top: 0; color: #856404;">Selected Items:</h3>
-                                    ${itemsHtml}
-                                </div>
-                            ` : '';
-                })() : ''}
                         
                         <div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0;">
                             <p style="font-size: 16px; color: #856404; margin: 0;">
@@ -225,17 +214,12 @@ const sendConfirmationEmail = async (orderData) => {
                             </p>
                         </div>
                         
-                        ${showCalculations ? `
+                        ${(orderData.calculation_2 || orderData.calculation_3) ? `
                             <div style="margin: 20px 0; padding: 15px; background-color: #f8d7da; border-radius: 5px;">
-                                <h3 style="margin-top: 0; color: #721c24;">Calculation Details:</h3>
-                                ${orderData.calculation_1 ? `<p style="margin: 5px 0;"><strong>Total Payable:</strong> ${orderData.calculation_1}</p>` : ''}
-                                ${orderData.calculation_3 ? `<p style="margin: 5px 0;"><strong>Total(before discount):</strong> ${orderData.calculation_3}</p>` : ''}
+                                <h3 style="margin-top: 0; color: #721c24;">Price:</h3>
+                                ${orderData.calculation_2 ? `<p style="margin: 5px 0;"><strong>Total:</strong> ${orderData.calculation_2}</p>` : orderData.calculation_3 ? `<p style="margin: 5px 0;"><strong>Total:</strong> ${orderData.calculation_3}</p>` : ''}
                             </div>
                         ` : ''}
-                        
-                        <p style="font-size: 16px; margin-bottom: 15px;">
-                            <strong>ORDER NUMBER:</strong> ${orderData.orderNumber || orderData['ORDER NUMBER'] || 'N/A'}
-                        </p>
                         
                         <p style="font-size: 18px; text-align: center; color: #27ae60; margin-top: 20px;">
                             💳 Thank you for your order from smasam!
@@ -289,7 +273,7 @@ const sendDeliveryEmail = async (orderData) => {
             subject: `Order Delivered - ${orderData.orderNumber}`,
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #27ae60;">Order Delivered - Smasam Restaurant</h2>
+                    <h2 style="color: #27ae60;">Order Delivered - Smasam Catering</h2>
                     
                     <p>Dear ${orderData.name || 'Valued Customer'},</p>
                     
@@ -311,7 +295,7 @@ const sendDeliveryEmail = async (orderData) => {
                         ` : ''}
                     </div>
                     
-                    <p>We hope you enjoy your meal! Thank you for choosing Smasam Restaurant.</p>
+                    <p>We hope you enjoy your meal! Thank you for choosing Smasam Catering.</p>
                     
                     <p>Please feel free to contact us if you have any questions or feedback.</p>
                     
