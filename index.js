@@ -36,15 +36,15 @@ const sendConfirmationEmail = async (orderData) => {
         if (!emailRegex.test(emailField.trim())) {
             return { success: false, error: 'Invalid email format' };
         }        // DEBUG: Log email function input
-        console.log('📧 ===== EMAIL FUNCTION DEBUG =====');
-        console.log('📦 Order data received:', JSON.stringify(orderData, null, 2));
-        console.log('📧 Email field (email):', orderData.email);
-        console.log('📧 Email field (email_1):', orderData.email_1);
-        console.log('💳 Payment method (Betalingsmetode):', orderData.Betalingsmetode);
-        console.log('🆔 Order number:', orderData.orderNumber);
-        console.log('💰 Total price:', orderData.totalPrice);
-        console.log('🧮 Calculation 1:', orderData.calculation_1);
-        console.log('🧮 Calculation 3:', orderData.calculation_3);
+        // console.log('📧 ===== EMAIL FUNCTION DEBUG =====');
+        // console.log('📦 Order data received:', JSON.stringify(orderData, null, 2));
+        // console.log('📧 Email field (email):', orderData.email);
+        // console.log('📧 Email field (email_1):', orderData.email_1);
+        // console.log('💳 Payment method (Betalingsmetode):', orderData.Betalingsmetode);
+        // console.log('🆔 Order number:', orderData.orderNumber);
+        // console.log('💰 Total price:', orderData.totalPrice);
+        // console.log('🧮 Calculation 1:', orderData.calculation_1);
+        // console.log('🧮 Calculation 3:', orderData.calculation_3);
 
         // Log ALL fields that contain 'calculation'
         console.log('🔍 All calculation fields in orderData:');
@@ -69,20 +69,20 @@ const sendConfirmationEmail = async (orderData) => {
         // Always show calculation fields if they exist, regardless of order type
         const showCalculations = orderData.calculation_1 || orderData.calculation_3;
 
-        console.log('🔍 Template logic:');
-        console.log('   - isMobilePay:', isMobilePay);
-        console.log('   - isTakeawayOrder:', isTakeawayOrder);
-        console.log('   - showPrice:', showPrice);
-        console.log('   - showCalculations:', showCalculations);
+        // console.log('🔍 Template logic:');
+        // console.log('   - isMobilePay:', isMobilePay);
+        // console.log('   - isTakeawayOrder:', isTakeawayOrder);
+        // console.log('   - showPrice:', showPrice);
+        // console.log('   - showCalculations:', showCalculations);
 
         // Debug pricing section values before template creation
-        console.log('💰 Pricing section debug:');
-        console.log('   - showPrice && orderData.totalPrice:', showPrice && orderData.totalPrice);
-        console.log('   - orderData.totalPrice:', orderData.totalPrice);
-        console.log('   - orderData.calculation_1:', orderData.calculation_1);
-        console.log('   - orderData.calculation_3:', orderData.calculation_3);
-        console.log('   - Boolean check calculation_1:', !!orderData.calculation_1);
-        console.log('   - Boolean check calculation_3:', !!orderData.calculation_3);
+        // console.log('💰 Pricing section debug:');
+        // console.log('   - showPrice && orderData.totalPrice:', showPrice && orderData.totalPrice);
+        // console.log('   - orderData.totalPrice:', orderData.totalPrice);
+        // console.log('   - orderData.calculation_1:', orderData.calculation_1);
+        // console.log('   - orderData.calculation_3:', orderData.calculation_3);
+        // console.log('   - Boolean check calculation_1:', !!orderData.calculation_1);
+        // console.log('   - Boolean check calculation_3:', !!orderData.calculation_3);
 
         // Create different email content based on payment method
         let emailContent;
@@ -253,14 +253,14 @@ const sendConfirmationEmail = async (orderData) => {
         };
 
         // DEBUG: Log email content being sent
-        console.log('📧 ===== EMAIL CONTENT DEBUG =====');
-        console.log('📬 To:', emailField.trim());
-        console.log('📝 Subject:', `Order Confirmed - ${orderData.orderNumber}`);
-        console.log('📄 HTML Content:', emailContent);
-        console.log('==================================');
+        // console.log('📧 ===== EMAIL CONTENT DEBUG =====');
+        // console.log('📬 To:', emailField.trim());
+        // console.log('📝 Subject:', `Order Confirmed - ${orderData.orderNumber}`);
+        // console.log('📄 HTML Content:', emailContent);
+        // console.log('==================================');
 
         const info = await transporter.sendMail(mailOptions);
-        console.log('✅ Email sent successfully! Message ID:', info.messageId);
+        // console.log('✅ Email sent successfully! Message ID:', info.messageId);
         return { success: true, messageId: info.messageId };
     } catch (error) {
         console.error('Error sending confirmation email:', error);
@@ -402,21 +402,21 @@ async function run() {
                 const id = req.params.id;
                 const updateData = req.body;
 
-                console.log('🔄 ===== AFGHAN PUT REQUEST DEBUG =====');
-                console.log('📝 Order ID:', id);
-                console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
-                console.log('🔍 Available fields in update:', Object.keys(updateData));
-                console.log('=======================================');
+                // console.log('🔄 ===== AFGHAN PUT REQUEST DEBUG =====');
+                // console.log('📝 Order ID:', id);
+                // console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
+                // console.log('🔍 Available fields in update:', Object.keys(updateData));
+                // console.log('=======================================');
 
                 // Get the current order data before updating
                 const currentOrder = await afghanCollection.findOne({ _id: new ObjectId(id) });
 
                 if (!currentOrder) {
-                    console.log('❌ Afghan order not found:', id);
+                    // console.log('❌ Afghan order not found:', id);
                     return res.status(404).send({ success: false, message: "Order not found" });
                 }
 
-                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
+                // console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
 
                 // Check if order status is being changed from "Pending" to "Confirmed" or "Confirm"
                 const isStatusChangingToConfirmed =
@@ -428,13 +428,13 @@ async function run() {
                     currentOrder.lastUpdate !== "Delivered" &&
                     updateData.lastUpdate === "Delivered";
 
-                console.log('🔍 Status change detection:');
-                console.log('   - Current status:', currentOrder.orderStatus);
-                console.log('   - New status:', updateData.orderStatus);
-                console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
-                console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
-                console.log('   - New lastUpdate:', updateData.lastUpdate);
-                console.log('   - Will send delivery email:', isStatusChangingToDelivered);
+                // console.log('🔍 Status change detection:');
+                // console.log('   - Current status:', currentOrder.orderStatus);
+                // console.log('   - New status:', updateData.orderStatus);
+                // console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
+                // console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
+                // console.log('   - New lastUpdate:', updateData.lastUpdate);
+                // console.log('   - Will send delivery email:', isStatusChangingToDelivered);
 
                 const result = await afghanCollection.updateOne(
                     { _id: new ObjectId(id) },
@@ -520,23 +520,23 @@ async function run() {
                 const id = req.params.id;
                 const updateData = req.body;
 
-                console.log('🔄 ===== PERSIAN PUT REQUEST DEBUG =====');
-                console.log('📝 Order ID:', id);
-                console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
-                console.log('🔍 Available fields in update:', Object.keys(updateData));
-                console.log('========================================');
+                // console.log('🔄 ===== PERSIAN PUT REQUEST DEBUG =====');
+                // console.log('📝 Order ID:', id);
+                // console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
+                // console.log('🔍 Available fields in update:', Object.keys(updateData));
+                // console.log('========================================');
 
                 // Get the current order data before updating
                 const currentOrder = await persianCollection.findOne({ _id: new ObjectId(id) });
 
                 if (!currentOrder) {
-                    console.log('❌ Persian order not found:', id);
+                    // console.log('❌ Persian order not found:', id);
                     return res.status(404).send({ success: false, message: "Order not found" });
                 }
 
-                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
+                // console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
 
-                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
+                // console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
 
                 // Check if order status is being changed from "Pending" to "Confirmed" or "Confirm"
                 const isStatusChangingToConfirmed =
@@ -548,13 +548,13 @@ async function run() {
                     currentOrder.lastUpdate !== "Delivered" &&
                     updateData.lastUpdate === "Delivered";
 
-                console.log('🔍 Status change detection:');
-                console.log('   - Current status:', currentOrder.orderStatus);
+                // console.log('🔍 Status change detection:');
+                // console.log('   - Current status:', currentOrder.orderStatus);
                 console.log('   - New status:', updateData.orderStatus);
-                console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
-                console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
-                console.log('   - New lastUpdate:', updateData.lastUpdate);
-                console.log('   - Will send delivery email:', isStatusChangingToDelivered);
+                // console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
+                // console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
+                // console.log('   - New lastUpdate:', updateData.lastUpdate);
+                // console.log('   - Will send delivery email:', isStatusChangingToDelivered);
 
 
                 const result = await persianCollection.updateOne(
@@ -621,7 +621,7 @@ async function run() {
         // post api for indian menu 
         app.post("/indian", async (req, res) => {
             const data = req.body;
-            console.log(data)
+            // console.log(data)
             // count total orders to generate unique order number
             const count = await indianCollection.countDocuments();
             // add extra fields before inserting
@@ -651,23 +651,23 @@ async function run() {
                 const id = req.params.id;
                 const updateData = req.body;
 
-                console.log('🔄 ===== INDIAN PUT REQUEST DEBUG =====');
-                console.log('📝 Order ID:', id);
-                console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
-                console.log('🔍 Available fields in update:', Object.keys(updateData));
-                console.log('=======================================');
+                // console.log('🔄 ===== INDIAN PUT REQUEST DEBUG =====');
+                // console.log('📝 Order ID:', id);
+                // console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
+                // console.log('🔍 Available fields in update:', Object.keys(updateData));
+                // console.log('=======================================');
 
                 // Get the current order data before updating
                 const currentOrder = await indianCollection.findOne({ _id: new ObjectId(id) });
 
                 if (!currentOrder) {
-                    console.log('❌ Indian order not found:', id);
+                    // console.log('❌ Indian order not found:', id);
                     return res.status(404).send({ success: false, message: "Order not found" });
                 }
 
-                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
+                // console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
 
-                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
+                // console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
 
                 // Check if order status is being changed from "Pending" to "Confirmed" or "Confirm"
                 const isStatusChangingToConfirmed =
@@ -679,13 +679,13 @@ async function run() {
                     currentOrder.lastUpdate !== "Delivered" &&
                     updateData.lastUpdate === "Delivered";
 
-                console.log('🔍 Status change detection:');
-                console.log('   - Current status:', currentOrder.orderStatus);
-                console.log('   - New status:', updateData.orderStatus);
-                console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
-                console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
-                console.log('   - New lastUpdate:', updateData.lastUpdate);
-                console.log('   - Will send delivery email:', isStatusChangingToDelivered);
+                // console.log('🔍 Status change detection:');
+                // console.log('   - Current status:', currentOrder.orderStatus);
+                // console.log('   - New status:', updateData.orderStatus);
+                // console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
+                // console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
+                // console.log('   - New lastUpdate:', updateData.lastUpdate);
+                // console.log('   - Will send delivery email:', isStatusChangingToDelivered);
 
                 const result = await indianCollection.updateOne(
                     { _id: new ObjectId(id) },
@@ -743,7 +743,7 @@ async function run() {
         //post api for lamb
         app.post("/lamb", async (req, res) => {
             const data = req.body;
-            console.log(data)
+            // console.log(data)
             // count total orders to generate unique order number
             const count = await lambCollection.countDocuments();
             // add extra fields before inserting
@@ -772,23 +772,23 @@ async function run() {
                 const id = req.params.id;
                 const updateData = req.body;
 
-                console.log('🔄 ===== LAMB PUT REQUEST DEBUG =====');
-                console.log('📝 Order ID:', id);
-                console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
-                console.log('🔍 Available fields in update:', Object.keys(updateData));
-                console.log('=====================================');
+                // console.log('🔄 ===== LAMB PUT REQUEST DEBUG =====');
+                // console.log('📝 Order ID:', id);
+                // console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
+                // console.log('🔍 Available fields in update:', Object.keys(updateData));
+                // console.log('=====================================');
 
                 // Get the current order data before updating
                 const currentOrder = await lambCollection.findOne({ _id: new ObjectId(id) });
 
                 if (!currentOrder) {
-                    console.log('❌ Lamb order not found:', id);
+                    // console.log('❌ Lamb order not found:', id);
                     return res.status(404).send({ success: false, message: "Order not found" });
                 }
 
-                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
+                // console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
 
-                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
+                // console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
 
                 // Check if order status is being changed from "Pending" to "Confirmed" or "Confirm"
                 const isStatusChangingToConfirmed =
@@ -800,13 +800,13 @@ async function run() {
                     currentOrder.lastUpdate !== "Delivered" &&
                     updateData.lastUpdate === "Delivered";
 
-                console.log('🔍 Status change detection:');
-                console.log('   - Current status:', currentOrder.orderStatus);
-                console.log('   - New status:', updateData.orderStatus);
-                console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
-                console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
-                console.log('   - New lastUpdate:', updateData.lastUpdate);
-                console.log('   - Will send delivery email:', isStatusChangingToDelivered);
+                // console.log('🔍 Status change detection:');
+                // console.log('   - Current status:', currentOrder.orderStatus);
+                // console.log('   - New status:', updateData.orderStatus);
+                // console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
+                // console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
+                // console.log('   - New lastUpdate:', updateData.lastUpdate);
+                // console.log('   - Will send delivery email:', isStatusChangingToDelivered);
 
                 const result = await lambCollection.updateOne(
                     { _id: new ObjectId(id) },
@@ -864,7 +864,7 @@ async function run() {
         //post api for takeAway
         app.post("/takeAway", async (req, res) => {
             const data = req.body;
-            console.log(data)
+            // console.log(data)
             // count total orders to generate unique order number
             const count = await takeAwayCollection.countDocuments();
             // add extra fields before inserting
@@ -893,21 +893,21 @@ async function run() {
                 const id = req.params.id;
                 const updateData = req.body;
 
-                console.log('🔄 ===== TAKEAWAY PUT REQUEST DEBUG =====');
-                console.log('📝 Order ID:', id);
-                console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
-                console.log('🔍 Available fields in update:', Object.keys(updateData));
-                console.log('=========================================');
+                // console.log('🔄 ===== TAKEAWAY PUT REQUEST DEBUG =====');
+                // console.log('📝 Order ID:', id);
+                // console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
+                // console.log('🔍 Available fields in update:', Object.keys(updateData));
+                // console.log('=========================================');
 
                 // Get the current order data before updating
                 const currentOrder = await takeAwayCollection.findOne({ _id: new ObjectId(id) });
 
                 if (!currentOrder) {
-                    console.log('❌ Takeaway order not found:', id);
+                    // console.log('❌ Takeaway order not found:', id);
                     return res.status(404).send({ success: false, message: "Order not found" });
                 }
 
-                console.log('📄 Current order found:', JSON.stringify(currentOrder, null, 2));
+                // console.log('📄 Current order found:', JSON.stringify(currentOrder, null, 2));
 
                 // Check if order status is being changed from "Pending" to "Confirmed" or "Confirm"
                 const isStatusChangingToConfirmed =
@@ -919,13 +919,13 @@ async function run() {
                     currentOrder.lastUpdate !== "Delivered" &&
                     updateData.lastUpdate === "Delivered";
 
-                console.log('🔍 Status change detection:');
-                console.log('   - Current status:', currentOrder.orderStatus);
-                console.log('   - New status:', updateData.orderStatus);
-                console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
-                console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
-                console.log('   - New lastUpdate:', updateData.lastUpdate);
-                console.log('   - Will send delivery email:', isStatusChangingToDelivered);
+                // console.log('🔍 Status change detection:');
+                // console.log('   - Current status:', currentOrder.orderStatus);
+                // console.log('   - New status:', updateData.orderStatus);
+                // console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
+                // console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
+                // console.log('   - New lastUpdate:', updateData.lastUpdate);
+                // console.log('   - Will send delivery email:', isStatusChangingToDelivered);
 
                 const result = await takeAwayCollection.updateOne(
                     { _id: new ObjectId(id) },
@@ -987,7 +987,7 @@ async function run() {
         //post api for lunch
         app.post("/lunch", async (req, res) => {
             const data = req.body;
-            console.log(data)
+            // console.log(data)
             // count total orders to generate unique order number
             const count = await lunchCollection.countDocuments();
             // add extra fields before inserting
@@ -1015,22 +1015,22 @@ async function run() {
                 const id = req.params.id;
                 const updateData = req.body;
 
-                console.log('🔄 ===== LUNCH PUT REQUEST DEBUG =====');
-                console.log('📝 Order ID:', id);
-                console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
-                console.log('🔍 Available fields in update:', Object.keys(updateData));
-                console.log('======================================');
+                // console.log('🔄 ===== LUNCH PUT REQUEST DEBUG =====');
+                // console.log('📝 Order ID:', id);
+                // console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
+                // console.log('🔍 Available fields in update:', Object.keys(updateData));
+                // console.log('======================================');
 
                 // Get the current order data before updating
                 const currentOrder = await lunchCollection.findOne({ _id: new ObjectId(id) });
 
                 if (!currentOrder) {
-                    console.log('❌ Lunch order not found:', id);
+                    // console.log('❌ Lunch order not found:', id);
                     return res.status(404).send({ success: false, message: "Order not found" });
                 }
 
-                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
-                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
+                // console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
+                // console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
 
                 // Check if order status is being changed from "Pending" to "Confirmed" or "Confirm"
                 const isStatusChangingToConfirmed =
@@ -1042,13 +1042,13 @@ async function run() {
                     currentOrder.lastUpdate !== "Delivered" &&
                     updateData.lastUpdate === "Delivered";
 
-                console.log('🔍 Status change detection:');
-                console.log('   - Current status:', currentOrder.orderStatus);
-                console.log('   - New status:', updateData.orderStatus);
-                console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
-                console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
-                console.log('   - New lastUpdate:', updateData.lastUpdate);
-                console.log('   - Will send delivery email:', isStatusChangingToDelivered);
+                // console.log('🔍 Status change detection:');
+                // console.log('   - Current status:', currentOrder.orderStatus);
+                // console.log('   - New status:', updateData.orderStatus);
+                // console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
+                // console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
+                // console.log('   - New lastUpdate:', updateData.lastUpdate);
+                // console.log('   - Will send delivery email:', isStatusChangingToDelivered);
 
                 const result = await lunchCollection.updateOne(
                     { _id: new ObjectId(id) },
