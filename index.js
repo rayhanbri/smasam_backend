@@ -35,51 +35,232 @@ const sendConfirmationEmail = async (orderData) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(emailField.trim())) {
             return { success: false, error: 'Invalid email format' };
+        }        // DEBUG: Log email function input
+        console.log('📧 ===== EMAIL FUNCTION DEBUG =====');
+        console.log('📦 Order data received:', JSON.stringify(orderData, null, 2));
+        console.log('📧 Email field (email):', orderData.email);
+        console.log('📧 Email field (email_1):', orderData.email_1);
+        console.log('💳 Payment method (Betalingsmetode):', orderData.Betalingsmetode);
+        console.log('🆔 Order number:', orderData.orderNumber);
+        console.log('💰 Total price:', orderData.totalPrice);
+        console.log('🧮 Calculation 1:', orderData.calculation_1);
+        console.log('🧮 Calculation 3:', orderData.calculation_3);
+
+        // Log ALL fields that contain 'calculation'
+        console.log('🔍 All calculation fields in orderData:');
+        Object.keys(orderData).forEach(key => {
+            if (key.toLowerCase().includes('calculation')) {
+                console.log(`   - ${key}: ${orderData[key]}`);
+            }
+        });
+
+        // Check payment method to determine email template
+        const isMobilePay = orderData.Betalingsmetode === "Mobilbetaling";
+
+        // Check if this is a takeaway order (for items display)
+        const isTakeawayOrder = orderData.orderNumber && orderData.orderNumber.includes('/take-');
+
+        // Check if this is lamb or takeaway order (for price display)
+        const showPrice = orderData.orderNumber && (
+            orderData.orderNumber.includes('/lamb-') ||
+            orderData.orderNumber.includes('/take-')
+        );
+
+        // Always show calculation fields if they exist, regardless of order type
+        const showCalculations = orderData.calculation_1 || orderData.calculation_3;
+
+        console.log('🔍 Template logic:');
+        console.log('   - isMobilePay:', isMobilePay);
+        console.log('   - isTakeawayOrder:', isTakeawayOrder);
+        console.log('   - showPrice:', showPrice);
+        console.log('   - showCalculations:', showCalculations);
+
+        // Debug pricing section values before template creation
+        console.log('💰 Pricing section debug:');
+        console.log('   - showPrice && orderData.totalPrice:', showPrice && orderData.totalPrice);
+        console.log('   - orderData.totalPrice:', orderData.totalPrice);
+        console.log('   - orderData.calculation_1:', orderData.calculation_1);
+        console.log('   - orderData.calculation_3:', orderData.calculation_3);
+        console.log('   - Boolean check calculation_1:', !!orderData.calculation_1);
+        console.log('   - Boolean check calculation_3:', !!orderData.calculation_3);
+
+        // Create different email content based on payment method
+        let emailContent;
+
+        if (isMobilePay) {
+            // MobilePay template
+            emailContent = `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #2c3e50; text-align: center;">SMASAM Restaurant</h2>
+                    
+                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <p style="font-size: 16px; margin-bottom: 15px;">
+                            Your order is confirmed ✅
+                        </p>
+                        
+                        <div style="margin: 20px 0; padding: 15px; background-color: #e9ecef; border-radius: 5px;">
+                            <h3 style="margin-top: 0; color: #495057;">Customer Information:</h3>
+                            <p style="margin: 5px 0;"><strong>Name:</strong> ${orderData.name_2 || orderData.name || 'N/A'}</p>
+                            <p style="margin: 5px 0;"><strong>Phone:</strong> ${orderData.phone_1 || orderData.phone || 'N/A'}</p>
+                            <p style="margin: 5px 0;"><strong>Email:</strong> ${orderData.email_1 || orderData.email || 'N/A'}</p>
+                            <p style="margin: 5px 0;"><strong>Payment Method:</strong> ${orderData.radio_3 || orderData.Betalingsmetode || 'N/A'}</p>
+                        </div>
+                        
+                        <div style="margin: 20px 0; padding: 15px; background-color: #e9ecef; border-radius: 5px;">
+                            <h3 style="margin-top: 0; color: #495057;">Order Details:</h3>
+                            <p style="margin: 5px 0;"><strong>Order Number:</strong> ${orderData.orderNumber || 'N/A'}</p>
+                            <p style="margin: 5px 0;"><strong>Pickup Time:</strong> ${orderData.radio_4 || orderData['Vælg dit afhentningstidspunkt'] || 'N/A'}</p>
+                            <p style="margin: 5px 0;"><strong>Pickup Location:</strong> Munkegårdsvej 21b, 3490 Kvistgaard</p>
+                            <p style="margin: 5px 0;"><strong>Service Type:</strong> ${orderData.radio_5 || 'Pickup'}</p>
+                        </div>
+                        
+                        ${showPrice && orderData.totalPrice ? `
+                            <div style="margin: 20px 0; padding: 15px; background-color: #d1ecf1; border-radius: 5px;">
+                                <h3 style="margin-top: 0; color: #0c5460;">Pricing:</h3>
+                                <p style="margin: 5px 0;"><strong>Total Amount:</strong> ${orderData.totalPrice} DKK</p>
+                            </div>
+                        ` : ''}
+                        
+                        ${isTakeawayOrder ? (() => {
+                    // Show items only for takeaway orders (items with "Stykke" values, excluding "Vælg mellem mulighederne")
+                    let itemsHtml = '';
+                    Object.keys(orderData).forEach(key => {
+                        const value = orderData[key];
+                        // Check if VALUE contains "Stykke" AND exclude any selection placeholders
+                        if (value &&
+                            String(value).includes('Stykke') &&
+                            !String(value).toLowerCase().includes('vælg') &&
+                            !String(value).toLowerCase().includes('mellem') &&
+                            !String(value).toLowerCase().includes('mulighederne')) {
+                            itemsHtml += `<p style="font-size: 14px; margin: 5px 0;">• ${key}: ${value}</p>`;
+                        }
+                    });
+                    return itemsHtml ? `
+                                <div style="margin: 20px 0; padding: 15px; background-color: #fff3cd; border-radius: 5px;">
+                                    <h3 style="margin-top: 0; color: #856404;">Selected Items:</h3>
+                                    ${itemsHtml}
+                                </div>
+                            ` : '';
+                })() : ''}
+                        
+                        <div style="background-color: #e8f4fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                            <p style="font-size: 16px; color: #2c3e50; margin: 0;">
+                                <strong>Please pay via MobilePay: #4 79 60</strong>
+                            </p>
+                        </div>
+                        
+                        ${showCalculations ? `
+                            <div style="margin: 20px 0; padding: 15px; background-color: #f8d7da; border-radius: 5px;">
+                                <h3 style="margin-top: 0; color: #721c24;">Calculation Details:</h3>
+                                ${orderData.calculation_1 ? `<p style="margin: 5px 0;"><strong>Calculation 1:</strong> ${orderData.calculation_1}</p>` : ''}
+                                ${orderData.calculation_3 ? `<p style="margin: 5px 0;"><strong>Calculation 3:</strong> ${orderData.calculation_3}</p>` : ''}
+                            </div>
+                        ` : ''}
+                        
+                        <p style="font-size: 18px; text-align: center; color: #27ae60; margin-top: 20px;">
+                            💳 Thank you for your order from SMASAM!
+                        </p>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Cash on pickup template
+            emailContent = `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #2c3e50; text-align: center;">SMASAM Restaurant</h2>
+                    
+                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <p style="font-size: 16px; margin-bottom: 15px;">
+                            Your order is confirmed ✅
+                        </p>
+                        
+                        <div style="margin: 20px 0; padding: 15px; background-color: #e9ecef; border-radius: 5px;">
+                            <h3 style="margin-top: 0; color: #495057;">Customer Information:</h3>
+                            <p style="margin: 5px 0;"><strong>Name:</strong> ${orderData.name_2 || orderData.name || 'N/A'}</p>
+                            <p style="margin: 5px 0;"><strong>Phone:</strong> ${orderData.phone_1 || orderData.phone || 'N/A'}</p>
+                            <p style="margin: 5px 0;"><strong>Email:</strong> ${orderData.email_1 || orderData.email || 'N/A'}</p>
+                            <p style="margin: 5px 0;"><strong>Payment Method:</strong> ${orderData.radio_3 || orderData.Betalingsmetode || 'N/A'}</p>
+                        </div>
+                        
+                        <div style="margin: 20px 0; padding: 15px; background-color: #e9ecef; border-radius: 5px;">
+                            <h3 style="margin-top: 0; color: #495057;">Order Details:</h3>
+                            <p style="margin: 5px 0;"><strong>Order Number:</strong> ${orderData.orderNumber || 'N/A'}</p>
+                            <p style="margin: 5px 0;"><strong>Pickup Time:</strong> ${orderData.radio_4 || orderData['Vælg dit afhentningstidspunkt|radio-4'] || 'N/A'}</p>
+                            <p style="margin: 5px 0;"><strong>Pickup Location:</strong> Munkegårdsvej 21b, 3490 Kvistgaard</p>
+                            <p style="margin: 5px 0;"><strong>Service Type:</strong> ${orderData.radio_5 || 'Pickup'}</p>
+                        </div>
+                        
+                        ${showPrice && orderData.totalPrice ? `
+                            <div style="margin: 20px 0; padding: 15px; background-color: #d1ecf1; border-radius: 5px;">
+                                <h3 style="margin-top: 0; color: #0c5460;">Pricing:</h3>
+                                <p style="margin: 5px 0;"><strong>Total Amount:</strong> ${orderData.totalPrice} DKK</p>
+                            </div>
+                        ` : ''}
+                        
+                        ${isTakeawayOrder ? (() => {
+                    // Show items only for takeaway orders (items with "Stykke" values, excluding "Vælg mellan mulighederne")
+                    let itemsHtml = '';
+                    Object.keys(orderData).forEach(key => {
+                        const value = orderData[key];
+                        // Check if VALUE contains "Stykke" AND exclude any selection placeholders
+                        if (value &&
+                            String(value).includes('Stykke') &&
+                            !String(value).toLowerCase().includes('vælg') &&
+                            !String(value).toLowerCase().includes('mellem') &&
+                            !String(value).toLowerCase().includes('mulighederne')) {
+                            itemsHtml += `<p style="font-size: 14px; margin: 5px 0;">• ${key}: ${value}</p>`;
+                        }
+                    });
+                    return itemsHtml ? `
+                                <div style="margin: 20px 0; padding: 15px; background-color: #fff3cd; border-radius: 5px;">
+                                    <h3 style="margin-top: 0; color: #856404;">Selected Items:</h3>
+                                    ${itemsHtml}
+                                </div>
+                            ` : '';
+                })() : ''}
+                        
+                        <div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                            <p style="font-size: 16px; color: #856404; margin: 0;">
+                                <strong>You can pay directly upon pickup 💵</strong>
+                            </p>
+                        </div>
+                        
+                        ${showCalculations ? `
+                            <div style="margin: 20px 0; padding: 15px; background-color: #f8d7da; border-radius: 5px;">
+                                <h3 style="margin-top: 0; color: #721c24;">Calculation Details:</h3>
+                                ${orderData.calculation_1 ? `<p style="margin: 5px 0;"><strong>Total Payable:</strong> ${orderData.calculation_1}</p>` : ''}
+                                ${orderData.calculation_3 ? `<p style="margin: 5px 0;"><strong>Total(before discount):</strong> ${orderData.calculation_3}</p>` : ''}
+                            </div>
+                        ` : ''}
+                        
+                        <p style="font-size: 16px; margin-bottom: 15px;">
+                            <strong>ORDER NUMBER:</strong> ${orderData.orderNumber || orderData['ORDER NUMBER'] || 'N/A'}
+                        </p>
+                        
+                        <p style="font-size: 18px; text-align: center; color: #27ae60; margin-top: 20px;">
+                            💳 Thank you for your order from smasam!
+                        </p>
+                    </div>
+                </div>
+            `;
         }
 
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: emailField.trim(),
             subject: `Order Confirmed - ${orderData.orderNumber}`,
-            html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #2c3e50;">Order Confirmation - Smasam Restaurant</h2>
-                    
-                    <p>Dear ${orderData.name || 'Valued Customer'},</p>
-                    
-                    <p>Thank you for your order! We're pleased to confirm that your order has been received and confirmed.</p>
-                    
-                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
-                        <h3 style="color: #2c3e50; margin-top: 0;">Order Details:</h3>
-                        <p><strong>Order Number:</strong> ${orderData.orderNumber}</p>
-                        <p><strong>Order Status:</strong> Confirmed</p>
-                        <p><strong>Phone:</strong> ${orderData.phone || 'N/A'}</p>
-                        <p><strong>Address:</strong> ${orderData.address || 'N/A'}</p>
-                        
-                        ${orderData.selectedItems ? `
-                            <h4>Items Ordered:</h4>
-                            <ul>
-                                ${orderData.selectedItems.map(item =>
-                `<li>${item.name} - Quantity: ${item.quantity} - £${item.price}</li>`
-            ).join('')}
-                            </ul>
-                            <p><strong>Total Amount:</strong> £${orderData.totalPrice || 'N/A'}</p>
-                        ` : ''}
-                    </div>
-                    
-                    <p>We'll notify you once your order is ready for delivery.</p>
-                    
-                    <p>Thank you for choosing Smasam Restaurant!</p>
-                    
-                    <hr style="margin: 30px 0;">
-                    <p style="color: #7f8c8d; font-size: 12px;">
-                        This is an automated message. Please do not reply to this email.
-                    </p>
-                </div>
-            `
+            html: emailContent
         };
 
+        // DEBUG: Log email content being sent
+        console.log('📧 ===== EMAIL CONTENT DEBUG =====');
+        console.log('📬 To:', emailField.trim());
+        console.log('📝 Subject:', `Order Confirmed - ${orderData.orderNumber}`);
+        console.log('📄 HTML Content:', emailContent);
+        console.log('==================================');
+
         const info = await transporter.sendMail(mailOptions);
+        console.log('✅ Email sent successfully! Message ID:', info.messageId);
         return { success: true, messageId: info.messageId };
     } catch (error) {
         console.error('Error sending confirmation email:', error);
@@ -118,8 +299,6 @@ const sendDeliveryEmail = async (orderData) => {
                         <h3 style="color: #27ae60; margin-top: 0;">Delivery Confirmation:</h3>
                         <p><strong>Order Number:</strong> ${orderData.orderNumber}</p>
                         <p><strong>Status:</strong> Delivered</p>
-                        <p><strong>Delivered to:</strong> ${orderData.address || 'N/A'}</p>
-                        <p><strong>Phone:</strong> ${orderData.phone || 'N/A'}</p>
                         
                         ${orderData.selectedItems ? `
                             <h4>Items Delivered:</h4>
@@ -223,22 +402,39 @@ async function run() {
                 const id = req.params.id;
                 const updateData = req.body;
 
+                console.log('🔄 ===== AFGHAN PUT REQUEST DEBUG =====');
+                console.log('📝 Order ID:', id);
+                console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
+                console.log('🔍 Available fields in update:', Object.keys(updateData));
+                console.log('=======================================');
+
                 // Get the current order data before updating
                 const currentOrder = await afghanCollection.findOne({ _id: new ObjectId(id) });
 
                 if (!currentOrder) {
+                    console.log('❌ Afghan order not found:', id);
                     return res.status(404).send({ success: false, message: "Order not found" });
                 }
 
-                // Check if order status is being changed from "Pending" to "Confirmed"
+                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
+
+                // Check if order status is being changed from "Pending" to "Confirmed" or "Confirm"
                 const isStatusChangingToConfirmed =
                     currentOrder.orderStatus === "Pending" &&
-                    updateData.orderStatus === "Confirmed";
+                    (updateData.orderStatus === "Confirmed" || updateData.orderStatus === "Confirm");
 
                 // Check if lastUpdate is being changed to "Delivered"
                 const isStatusChangingToDelivered =
                     currentOrder.lastUpdate !== "Delivered" &&
                     updateData.lastUpdate === "Delivered";
+
+                console.log('🔍 Status change detection:');
+                console.log('   - Current status:', currentOrder.orderStatus);
+                console.log('   - New status:', updateData.orderStatus);
+                console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
+                console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
+                console.log('   - New lastUpdate:', updateData.lastUpdate);
+                console.log('   - Will send delivery email:', isStatusChangingToDelivered);
 
                 const result = await afghanCollection.updateOne(
                     { _id: new ObjectId(id) },
@@ -324,13 +520,23 @@ async function run() {
                 const id = req.params.id;
                 const updateData = req.body;
 
+                console.log('🔄 ===== PERSIAN PUT REQUEST DEBUG =====');
+                console.log('📝 Order ID:', id);
+                console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
+                console.log('🔍 Available fields in update:', Object.keys(updateData));
+                console.log('========================================');
+
                 // Get the current order data before updating
                 const currentOrder = await persianCollection.findOne({ _id: new ObjectId(id) });
 
                 if (!currentOrder) {
-                    console.log('❌ Order not found:', id);
+                    console.log('❌ Persian order not found:', id);
                     return res.status(404).send({ success: false, message: "Order not found" });
                 }
+
+                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
+
+                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
 
                 // Check if order status is being changed from "Pending" to "Confirmed" or "Confirm"
                 const isStatusChangingToConfirmed =
@@ -341,6 +547,14 @@ async function run() {
                 const isStatusChangingToDelivered =
                     currentOrder.lastUpdate !== "Delivered" &&
                     updateData.lastUpdate === "Delivered";
+
+                console.log('🔍 Status change detection:');
+                console.log('   - Current status:', currentOrder.orderStatus);
+                console.log('   - New status:', updateData.orderStatus);
+                console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
+                console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
+                console.log('   - New lastUpdate:', updateData.lastUpdate);
+                console.log('   - Will send delivery email:', isStatusChangingToDelivered);
 
 
                 const result = await persianCollection.updateOne(
@@ -437,13 +651,23 @@ async function run() {
                 const id = req.params.id;
                 const updateData = req.body;
 
+                console.log('🔄 ===== INDIAN PUT REQUEST DEBUG =====');
+                console.log('📝 Order ID:', id);
+                console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
+                console.log('🔍 Available fields in update:', Object.keys(updateData));
+                console.log('=======================================');
+
                 // Get the current order data before updating
                 const currentOrder = await indianCollection.findOne({ _id: new ObjectId(id) });
 
                 if (!currentOrder) {
-                    console.log('❌ Order not found:', id);
+                    console.log('❌ Indian order not found:', id);
                     return res.status(404).send({ success: false, message: "Order not found" });
                 }
+
+                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
+
+                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
 
                 // Check if order status is being changed from "Pending" to "Confirmed" or "Confirm"
                 const isStatusChangingToConfirmed =
@@ -454,6 +678,14 @@ async function run() {
                 const isStatusChangingToDelivered =
                     currentOrder.lastUpdate !== "Delivered" &&
                     updateData.lastUpdate === "Delivered";
+
+                console.log('🔍 Status change detection:');
+                console.log('   - Current status:', currentOrder.orderStatus);
+                console.log('   - New status:', updateData.orderStatus);
+                console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
+                console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
+                console.log('   - New lastUpdate:', updateData.lastUpdate);
+                console.log('   - Will send delivery email:', isStatusChangingToDelivered);
 
                 const result = await indianCollection.updateOne(
                     { _id: new ObjectId(id) },
@@ -540,13 +772,23 @@ async function run() {
                 const id = req.params.id;
                 const updateData = req.body;
 
+                console.log('🔄 ===== LAMB PUT REQUEST DEBUG =====');
+                console.log('📝 Order ID:', id);
+                console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
+                console.log('🔍 Available fields in update:', Object.keys(updateData));
+                console.log('=====================================');
+
                 // Get the current order data before updating
                 const currentOrder = await lambCollection.findOne({ _id: new ObjectId(id) });
 
                 if (!currentOrder) {
-                    console.log('❌ Order not found:', id);
+                    console.log('❌ Lamb order not found:', id);
                     return res.status(404).send({ success: false, message: "Order not found" });
                 }
+
+                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
+
+                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
 
                 // Check if order status is being changed from "Pending" to "Confirmed" or "Confirm"
                 const isStatusChangingToConfirmed =
@@ -557,6 +799,14 @@ async function run() {
                 const isStatusChangingToDelivered =
                     currentOrder.lastUpdate !== "Delivered" &&
                     updateData.lastUpdate === "Delivered";
+
+                console.log('🔍 Status change detection:');
+                console.log('   - Current status:', currentOrder.orderStatus);
+                console.log('   - New status:', updateData.orderStatus);
+                console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
+                console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
+                console.log('   - New lastUpdate:', updateData.lastUpdate);
+                console.log('   - Will send delivery email:', isStatusChangingToDelivered);
 
                 const result = await lambCollection.updateOne(
                     { _id: new ObjectId(id) },
@@ -643,11 +893,17 @@ async function run() {
                 const id = req.params.id;
                 const updateData = req.body;
 
+                console.log('🔄 ===== TAKEAWAY PUT REQUEST DEBUG =====');
+                console.log('📝 Order ID:', id);
+                console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
+                console.log('🔍 Available fields in update:', Object.keys(updateData));
+                console.log('=========================================');
+
                 // Get the current order data before updating
                 const currentOrder = await takeAwayCollection.findOne({ _id: new ObjectId(id) });
 
                 if (!currentOrder) {
-                    console.log('❌ Order not found:', id);
+                    console.log('❌ Takeaway order not found:', id);
                     return res.status(404).send({ success: false, message: "Order not found" });
                 }
 
@@ -662,6 +918,14 @@ async function run() {
                 const isStatusChangingToDelivered =
                     currentOrder.lastUpdate !== "Delivered" &&
                     updateData.lastUpdate === "Delivered";
+
+                console.log('🔍 Status change detection:');
+                console.log('   - Current status:', currentOrder.orderStatus);
+                console.log('   - New status:', updateData.orderStatus);
+                console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
+                console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
+                console.log('   - New lastUpdate:', updateData.lastUpdate);
+                console.log('   - Will send delivery email:', isStatusChangingToDelivered);
 
                 const result = await takeAwayCollection.updateOne(
                     { _id: new ObjectId(id) },
@@ -751,15 +1015,22 @@ async function run() {
                 const id = req.params.id;
                 const updateData = req.body;
 
+                console.log('🔄 ===== LUNCH PUT REQUEST DEBUG =====');
+                console.log('📝 Order ID:', id);
+                console.log('📦 Update data received:', JSON.stringify(updateData, null, 2));
+                console.log('🔍 Available fields in update:', Object.keys(updateData));
+                console.log('======================================');
+
                 // Get the current order data before updating
                 const currentOrder = await lunchCollection.findOne({ _id: new ObjectId(id) });
 
                 if (!currentOrder) {
-                    console.log('❌ Order not found:', id);
+                    console.log('❌ Lunch order not found:', id);
                     return res.status(404).send({ success: false, message: "Order not found" });
                 }
 
-
+                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
+                console.log('📄 Current order before update:', JSON.stringify(currentOrder, null, 2));
 
                 // Check if order status is being changed from "Pending" to "Confirmed" or "Confirm"
                 const isStatusChangingToConfirmed =
@@ -770,6 +1041,14 @@ async function run() {
                 const isStatusChangingToDelivered =
                     currentOrder.lastUpdate !== "Delivered" &&
                     updateData.lastUpdate === "Delivered";
+
+                console.log('🔍 Status change detection:');
+                console.log('   - Current status:', currentOrder.orderStatus);
+                console.log('   - New status:', updateData.orderStatus);
+                console.log('   - Will send confirmation email:', isStatusChangingToConfirmed);
+                console.log('   - Current lastUpdate:', currentOrder.lastUpdate);
+                console.log('   - New lastUpdate:', updateData.lastUpdate);
+                console.log('   - Will send delivery email:', isStatusChangingToDelivered);
 
                 const result = await lunchCollection.updateOne(
                     { _id: new ObjectId(id) },
