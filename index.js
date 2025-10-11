@@ -338,6 +338,7 @@ async function run() {
         const lambCollection = client.db('smasam_backend').collection('lamb')
         const takeAwayCollection = client.db('smasam_backend').collection('takeAway')
         const lunchCollection = client.db('smasam_backend').collection('lunch')
+        const contactCollection = client.db('smasam_backend').collection('contact-form')
 
 
 
@@ -1085,24 +1086,15 @@ async function run() {
             }
         });
 
-
-
         //get data  endpoit 
+        
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        // contact form added 
+        app.post('/contact-form',async(req,res)=>{
+            const data= req.body;
+            const result = await contactCollection.insertOne(data);
+            res.send(result)
+        })
 
 
 
