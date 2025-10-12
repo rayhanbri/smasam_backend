@@ -1095,6 +1095,11 @@ async function run() {
             const result = await contactCollection.insertOne(data);
             res.send(result)
         })
+        //contact form get api . 
+        app.get('/contact-form',async(req,res)=>{
+            const result = await contactCollection.find().toArray()
+            res.send(result)
+        })
 
 
 
