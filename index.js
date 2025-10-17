@@ -155,7 +155,7 @@ const sendConfirmationEmail = async (orderData) => {
                         
                         <div style="background-color: #e8f4fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
                             <p style="font-size: 16px; color: #2c3e50; margin: 0;">
-                                <strong>Please pay via MobilePay: #4 79 60</strong>
+                                <strong>Please pay via MobilePay: #4 78 60</strong>
                             </p>
                         </div>
                         
@@ -1087,16 +1087,16 @@ async function run() {
         });
 
         //get data  endpoit 
-        
+
 
         // contact form added 
-        app.post('/contact-form',async(req,res)=>{
-            const data= req.body;
+        app.post('/contact-form', async (req, res) => {
+            const data = req.body;
             const result = await contactCollection.insertOne(data);
             res.send(result)
         })
         //contact form get api . 
-        app.get('/contact-form',async(req,res)=>{
+        app.get('/contact-form', async (req, res) => {
             const result = await contactCollection.find().toArray()
             res.send(result)
         })
